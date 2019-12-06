@@ -7,7 +7,7 @@ const WINDOW_HEIGHT = MAP_NUM_ROWS * TILE_SIZE
 
 const FOV_ANGLE = 60 * (Math.PI / 180)
 
-const WALL_STRIP_WIDTH = 30
+const WALL_STRIP_WIDTH = 20
 const NUM_RAYS = WINDOW_WIDTH / WALL_STRIP_WIDTH
 
 const DIRECTION = {
@@ -93,14 +93,14 @@ class Player {
   render() {
     fill('#f00')
     circle(this.x, this.y, this.radius)
-    stroke('#f00')
-    line(
-      this.x,
-      this.y,
-      this.x + (Math.cos(this.rotationAngle) * 12),
-      this.y + (Math.sin(this.rotationAngle) * 12)
-    )
-    noStroke()
+    // stroke('#f00')
+    // line(
+    //   this.x,
+    //   this.y,
+    //   this.x + (Math.cos(this.rotationAngle) * 12),
+    //   this.y + (Math.sin(this.rotationAngle) * 12)
+    // )
+    // noStroke()
   }
 }
 
@@ -126,54 +126,104 @@ class Ray {
   }
 
   cast(columnId) {
-    let xintercept, yintercept
-    let xstep, ystep
+    // TODO: Reuse as a single function.
+    const getHorizontalIntersection = () => {
+      let xintercept, yintercept
+      let xstep, ystep
 
-    // Horizontal intersection
+      // Horizontal intersection
 
-    // y-coordinate of closest horizontal grid intersection
-    yintercept = Math.floor(this.pivot.y / TILE_SIZE) * TILE_SIZE
-    yintercept += this.isFacingDown ? TILE_SIZE : 0
+      // y-coordinate of closest horizontal grid intersection
+      yintercept = Math.floor(this.pivot.y / TILE_SIZE) * TILE_SIZE
+      yintercept += this.isFacingDown ? TILE_SIZE : 0
 
-    // x-coordinate of closest horizontal grid intersection
-    xintercept = this.pivot.x + (yintercept - this.pivot.y) / Math.tan(this.angle)
-    xintercept += this.isFacingLeft ? TILE_SIZE : 0
+      // x-coordinate of closest horizontal grid intersection
+      xintercept = this.pivot.x + (yintercept - this.pivot.y) / Math.tan(this.angle)
+      xintercept += this.isFacingLeft ? TILE_SIZE : 0
 
-    // Calculate the increment xstep and ystep
-    ystep = TILE_SIZE * (this.isFacingDown ? 1 : -1)
-    xstep = Math.abs(TILE_SIZE / Math.tan(this.angle)) * (this.isFacingLeft ? -1 : 1)
+      // Calculate the increment xstep and ystep
+      ystep = TILE_SIZE * (this.isFacingDown ? 1 : -1)
+      xstep = Math.abs(TILE_SIZE / Math.tan(this.angle)) * (this.isFacingLeft ? -1 : 1)
 
-    let nextIntersectX = xintercept
-    let nextIntersectY = yintercept
+      let nextIntersectX = xintercept
+      let nextIntersectY = yintercept
 
-    // Make sure to verify the first row and remove 1 pixel.
-    // Otherwise will start from the second row.
-    // TODO: Same for vertical intersection, but x-axis.
-    if (!this.isFacingDown) {
-      nextIntersectY -= 1
-    }
-
-    while (nextIntersectX >= 0 && nextIntersectX <= WINDOW_WIDTH && nextIntersectY >= 0 && nextIntersectY <= WINDOW_HEIGHT) {
-      if (grid.isCollides({ x: nextIntersectX, y: nextIntersectY })) {
-        stroke('#0f0')
-        line(this.pivot.x, this.pivot.y, nextIntersectX, nextIntersectY)
-        noStroke()
-        break
-      } else {
-        nextIntersectX += xstep
-        nextIntersectY += ystep
+      // Make sure to verify the first row and remove 1 pixel.
+      // Otherwise will start from the second row.
+      if (!this.isFacingDown) {
+        nextIntersectY -= 1
       }
+
+      while (nextIntersectX >= 0 && nextIntersectX <= WINDOW_WIDTH && nextIntersectY >= 0 && nextIntersectY <= WINDOW_HEIGHT) {
+        if (grid.isCollides({ x: nextIntersectX, y: nextIntersectY })) {
+          // return { x: nextIntersectX, y: nextIntersectY }
+          break
+        } else {
+          nextIntersectX += xstep
+          nextIntersectY += ystep
+        }
+      }
+
+      return { x: nextIntersectX, y: nextIntersectY }
+      // return null
     }
+
+    const getVerticalIntersection = () => {
+      let xintercept, yintercept
+      let xstep, ystep
+
+      // Vertical intersection
+
+      // x-coordinate of closest vertical grid intersection
+      xintercept = Math.floor(this.pivot.x / TILE_SIZE) * TILE_SIZE
+      xintercept += this.isFacingLeft ? 0 : TILE_SIZE
+
+      // y-coordinate of closest vertical grid intersection
+      yintercept = this.pivot.y + (xintercept - this.pivot.x) * Math.tan(this.angle)
+      yintercept += this.isFacingDown ? 0 : TILE_SIZE
+
+      // Calculate the increment xstep and ystep
+      xstep = TILE_SIZE * (this.isFacingLeft ? -1 : 1)
+      ystep = Math.abs(TILE_SIZE * Math.tan(this.angle)) * (this.isFacingDown ? 1 : -1)
+
+      let nextIntersectX = xintercept
+      let nextIntersectY = yintercept
+
+      // Make sure to verify the first column and remove 1 pixel.
+      // Otherwise will start from the second column.
+      if (this.isFacingLeft) {
+        nextIntersectX -= 1
+      }
+
+      while (nextIntersectX >= 0 && nextIntersectX <= WINDOW_WIDTH && nextIntersectY >= 0 && nextIntersectY <= WINDOW_HEIGHT) {
+        if (grid.isCollides({ x: nextIntersectX, y: nextIntersectY })) {
+          // return { x: nextIntersectX, y: nextIntersectY }
+          break
+        } else {
+          nextIntersectX += xstep
+          nextIntersectY += ystep
+        }
+      }
+
+      return { x: nextIntersectX, y: nextIntersectY }
+      // return null
+    }
+
+    const hRes = getHorizontalIntersection()
+    const vRes = getVerticalIntersection()
+    const hDist = hRes ? distanceBetweenPoints(this.pivot, hRes) : null
+    const vDist = vRes ? distanceBetweenPoints(this.pivot, vRes) : null
+
+    // Only store smallest distances.
+    this.wallHitX = hDist > vDist ? vRes.x : hRes.x
+    this.wallHitY = hDist > vDist ? vRes.y : hRes.y
+    this.distance = hDist > vDist ? vDist : hDist
+    // console.log('wallHit{XY}', this.wallHitX, this.wallHitY, this.distance)
   }
 
   render() {
     stroke('rgba(255, 0, 0, 0.4)')
-    line(
-      this.pivot.x,
-      this.pivot.y,
-      this.pivot.x + Math.cos(this.angle) * 30,
-      this.pivot.y + Math.sin(this.angle) * 30
-    )
+    line(this.pivot.x, this.pivot.y, this.wallHitX, this.wallHitY)
     noStroke()
   }
 }
@@ -188,13 +238,21 @@ function normalizeAngle(angle) {
   return angle < 0 ? (angle + Math.PI * 2) : angle
 }
 
+function distanceBetweenPoints(o, t) {
+  if (!o || !t) {
+    throw new Error('[distanceBetweenPoints] Invalid arguments provided! {o}, {t}', o, t)
+  }
+
+  return Math.sqrt(Math.pow(t.x - o.x, 2) + Math.pow(t.y - t.x, 2))
+}
+
 function castAllRays() {
   let columnId = 0
 
   let angle = player.rotationAngle - (FOV_ANGLE / 2)
   rays = []
 
-  for (let i = 0; i < 1; i++) {
+  for (let i = 0; i < NUM_RAYS; i++) {
     const ray = new Ray(player, angle)
     ray.cast(columnId)
     rays.push(ray)
@@ -223,7 +281,7 @@ function keyReleased() {
 
 function update() {
   player.update()
-  // castAllRays()
+  castAllRays()
 }
 
 function draw() {
@@ -234,5 +292,4 @@ function draw() {
     }
 
     player.render()
-    castAllRays()
   }
