@@ -8,7 +8,7 @@ const WINDOW_HEIGHT = MAP_NUM_ROWS * TILE_SIZE
 const FOV_ANGLE = 60 * (Math.PI / 180)
 const DIST_PROJ_PLANE = (WINDOW_WIDTH / 2) / Math.tan(FOV_ANGLE / 2)
 
-const WALL_STRIP_WIDTH = 1
+const WALL_STRIP_WIDTH = 7
 const NUM_RAYS = WINDOW_WIDTH / WALL_STRIP_WIDTH
 
 const DIRECTION = {
@@ -236,7 +236,7 @@ let rays = []
 function renderProjectedWalls() {
   for (let i = 0; i < NUM_RAYS; i++) {
     const r = rays[i]
-    const dist = r.distance
+    const dist = Math.cos(r.angle - player.rotationAngle) * r.distance
 
     const wallStripHeight = TILE_SIZE / (dist / DIST_PROJ_PLANE)
 
