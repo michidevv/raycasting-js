@@ -71,8 +71,8 @@ class Player {
   turnDirection = DIRECTION.none
   walkDirection = DIRECTION.none
   rotationAngle = Math.PI / 2
-  moveSpeed = 40
-  rotationSpeed = 2 * (Math.PI / 2)
+  moveSpeed = 50
+  rotationSpeed = 1.5 * (Math.PI / 2)
 
   level = null
 
@@ -83,6 +83,7 @@ class Player {
   update() {
     const dt = deltaTime / 1000
     this.rotationAngle += (this.turnDirection * this.rotationSpeed * dt)
+    this.rotationAngle = normalizeAngle(this.rotationAngle)
     const step = this.walkDirection * this.moveSpeed
     const x = this.x + (Math.cos(this.rotationAngle) * step) * dt
     const y = this.y + (Math.sin(this.rotationAngle) * step) * dt
