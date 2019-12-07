@@ -1,4 +1,4 @@
-const TILE_SIZE = 32
+const TILE_SIZE = 64
 const MAP_NUM_ROWS = 11
 const MAP_NUM_COLS = 15
 
@@ -56,7 +56,7 @@ class Grid {
         const color = this.#map[i][j] === 1 ? '#222' : '#fff'
         stroke('#222')
         fill(color)
-        rect(x, y, TILE_SIZE, TILE_SIZE)
+        rect(...applyScaleFactor(x, y, TILE_SIZE, TILE_SIZE))
         noStroke()
       }
     }
@@ -70,7 +70,7 @@ class Player {
   turnDirection = DIRECTION.none
   walkDirection = DIRECTION.none
   rotationAngle = Math.PI / 2
-  moveSpeed = 20
+  moveSpeed = 40
   rotationSpeed = 2 * (Math.PI / 2)
 
   level = null
@@ -94,14 +94,14 @@ class Player {
 
   render() {
     fill('#f00')
-    circle(this.x, this.y, this.radius)
+    circle(...applyScaleFactor(this.x, this.y, this.radius))
     // stroke('#f00')
-    // line(
+    // line(...applyScaleFactor(
     //   this.x,
     //   this.y,
     //   this.x + (Math.cos(this.rotationAngle) * 12),
     //   this.y + (Math.sin(this.rotationAngle) * 12)
-    // )
+    // ))
     // noStroke()
   }
 }
@@ -223,7 +223,7 @@ class Ray {
 
   render() {
     stroke('rgba(255, 0, 0, 0.4)')
-    line(this.pivot.x, this.pivot.y, this.wallHitX, this.wallHitY)
+    line(...applyScaleFactor(this.pivot.x, this.pivot.y, this.wallHitX, this.wallHitY))
     noStroke()
   }
 }
@@ -231,6 +231,29 @@ class Ray {
 const grid = new Grid()
 const player = new Player(grid)
 let rays = []
+
+function renderProjectedWalls() {
+  for (let i = 0; i < NUM_RAYS; i++) {
+    const r = rays[i]
+    const dist = r.distance
+
+    const distProjPlane = (WINDOW_WIDTH / 2) / Math.tan(FOV_ANGLE / 2)
+
+    const wallStripHeight = (TILE_SIZE / dist) * distProjPlane
+
+    fill('#fff')
+    rect(
+      i * WALL_STRIP_WIDTH,
+      (WINDOW_HEIGHT / 2) - (wallStripHeight / 2),
+      WALL_STRIP_WIDTH,
+      wallStripHeight
+    )
+  }
+}
+
+function applyScaleFactor(...args) {
+  return args.map(v => v * MINIMAP_SCALE_FACTOR)
+}
 
 function normalizeAngle(angle) {
   angle = angle % (2 * Math.PI)
@@ -243,7 +266,7 @@ function distanceBetweenPoints(o, t) {
     throw new Error('[distanceBetweenPoints] Invalid arguments provided! {o}, {t}', o, t)
   }
 
-  return Math.sqrt(Math.pow(t.x - o.x, 2) + Math.pow(t.y - t.x, 2))
+  return Math.sqrt(Math.pow(t.x - o.x, 2) + Math.pow(t.y - o.y, 2))
 }
 
 function castAllRays() {
@@ -285,7 +308,11 @@ function update() {
 }
 
 function draw() {
+    clear('#212121')
     update()
+
+    renderProjectedWalls()
+
     grid.render()
     for (let i = 0, raysLen = rays.length; i < raysLen; i++) {
       rays[i].render()
