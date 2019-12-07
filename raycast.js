@@ -1,4 +1,4 @@
-const TILE_SIZE = 64
+const TILE_SIZE = 48
 const MAP_NUM_ROWS = 11
 const MAP_NUM_COLS = 15
 
@@ -6,6 +6,7 @@ const WINDOW_WIDTH = MAP_NUM_COLS * TILE_SIZE
 const WINDOW_HEIGHT = MAP_NUM_ROWS * TILE_SIZE
 
 const FOV_ANGLE = 60 * (Math.PI / 180)
+const DIST_PROJ_PLANE = (WINDOW_WIDTH / 2) / Math.tan(FOV_ANGLE / 2)
 
 const WALL_STRIP_WIDTH = 1
 const NUM_RAYS = WINDOW_WIDTH / WALL_STRIP_WIDTH
@@ -237,9 +238,7 @@ function renderProjectedWalls() {
     const r = rays[i]
     const dist = r.distance
 
-    const distProjPlane = (WINDOW_WIDTH / 2) / Math.tan(FOV_ANGLE / 2)
-
-    const wallStripHeight = (TILE_SIZE / dist) * distProjPlane
+    const wallStripHeight = (TILE_SIZE / dist) * DIST_PROJ_PLANE
 
     fill('#fff')
     rect(
