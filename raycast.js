@@ -238,7 +238,7 @@ function renderProjectedWalls() {
     const r = rays[i]
     const dist = r.distance
 
-    const wallStripHeight = (TILE_SIZE / dist) * DIST_PROJ_PLANE
+    const wallStripHeight = TILE_SIZE / (dist / DIST_PROJ_PLANE)
 
     fill('#fff')
     rect(
