@@ -7,7 +7,7 @@ const WINDOW_HEIGHT = MAP_NUM_ROWS * TILE_SIZE
 
 const FOV_ANGLE = 60 * (Math.PI / 180)
 
-const WALL_STRIP_WIDTH = 20
+const WALL_STRIP_WIDTH = 1
 const NUM_RAYS = WINDOW_WIDTH / WALL_STRIP_WIDTH
 
 const DIRECTION = {
@@ -15,6 +15,8 @@ const DIRECTION = {
   none: 0,
   right: 1
 }
+
+const MINIMAP_SCALE_FACTOR = 0.2
 
 class Grid {
   #map = [
@@ -139,7 +141,6 @@ class Ray {
 
       // x-coordinate of closest horizontal grid intersection
       xintercept = this.pivot.x + (yintercept - this.pivot.y) / Math.tan(this.angle)
-      xintercept += this.isFacingLeft ? TILE_SIZE : 0
 
       // Calculate the increment xstep and ystep
       ystep = TILE_SIZE * (this.isFacingDown ? 1 : -1)
@@ -180,7 +181,6 @@ class Ray {
 
       // y-coordinate of closest vertical grid intersection
       yintercept = this.pivot.y + (xintercept - this.pivot.x) * Math.tan(this.angle)
-      yintercept += this.isFacingDown ? 0 : TILE_SIZE
 
       // Calculate the increment xstep and ystep
       xstep = TILE_SIZE * (this.isFacingLeft ? -1 : 1)
